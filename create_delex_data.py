@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+'''
+	This script is adapted from multiwoz benchmark repository
+	https://github.com/budzianowski/multiwoz/blob/master/create_delex_data.py
+'''
+import sys
 import copy
 import json
 import os
@@ -37,23 +42,27 @@ def fixDelex(filename, data, data2, idx, idx_acts):
     except:
         return data
 
-    if not isinstance(turn, str) and not isinstance(turn, bytes):
-        for k, act in turn.items():
-            if 'Attraction' in k:
-                if 'restaurant_' in data['log'][idx]['text']:
-                    data['log'][idx]['text'] = data['log'][idx]['text'].replace("restaurant", "attraction")
-                if 'hotel_' in data['log'][idx]['text']:
-                    data['log'][idx]['text'] = data['log'][idx]['text'].replace("hotel", "attraction")
-            if 'Hotel' in k:
-                if 'attraction_' in data['log'][idx]['text']:
-                    data['log'][idx]['text'] = data['log'][idx]['text'].replace("attraction", "hotel")
-                if 'restaurant_' in data['log'][idx]['text']:
-                    data['log'][idx]['text'] = data['log'][idx]['text'].replace("restaurant", "hotel")
-            if 'Restaurant' in k:
-                if 'attraction_' in data['log'][idx]['text']:
-                    data['log'][idx]['text'] = data['log'][idx]['text'].replace("attraction", "restaurant")
-                if 'hotel_' in data['log'][idx]['text']:
-                    data['log'][idx]['text'] = data['log'][idx]['text'].replace("hotel", "restaurant")
+    if not isinstance(turn, str): #and not isinstance(turn, bytes):
+        no_annotation_item = 0
+        try:
+            for k, act in turn.items():
+                if 'Attraction' in k:
+                    if 'restaurant_' in data['log'][idx]['text']:
+                        data['log'][idx]['text'] = data['log'][idx]['text'].replace("restaurant", "attraction")
+                    if 'hotel_' in data['log'][idx]['text']:
+                        data['log'][idx]['text'] = data['log'][idx]['text'].replace("hotel", "attraction")
+                if 'Hotel' in k:
+                    if 'attraction_' in data['log'][idx]['text']:
+                        data['log'][idx]['text'] = data['log'][idx]['text'].replace("attraction", "hotel")
+                    if 'restaurant_' in data['log'][idx]['text']:
+                        data['log'][idx]['text'] = data['log'][idx]['text'].replace("restaurant", "hotel")
+                if 'Restaurant' in k:
+                    if 'attraction_' in data['log'][idx]['text']:
+                        data['log'][idx]['text'] = data['log'][idx]['text'].replace("attraction", "restaurant")
+                    if 'hotel_' in data['log'][idx]['text']:
+                        data['log'][idx]['text'] = data['log'][idx]['text'].replace("hotel", "restaurant")
+        except AttributeError:
+            print("curent no_annotation_item:", no_annotation_item, "turn:",turn)
 
     return data
 
@@ -281,7 +290,7 @@ def createDelexData():
     4) saves the delexicalized data
     """
     # download the data
-    loadData()
+    #loadData()
     
     # create dictionary of delexicalied values that then we will search against, order matters here!
     dic = delexicalize.prepareSlotValuesIndependent()
