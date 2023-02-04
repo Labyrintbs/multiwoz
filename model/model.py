@@ -6,7 +6,7 @@ import operator
 import os
 import random
 from io import open
-from Queue import PriorityQueue
+from queue import PriorityQueue
 
 import numpy as np
 import torch
@@ -14,12 +14,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import optim
 
-import policy
+#changes adapted to python3
+from functools import reduce  
+from model import policy
 
 SOS_token = 0
 EOS_token = 1
 UNK_token = 2
 PAD_token = 3
+
+# from stackoverflow https://stackoverflow.com/questions/62752522/runtimeerror-cudnn-error-cudnn-status-success
+# to avoid RuntimeError: CuDNN error: CUDNN_STATUS_SUCCESS
+torch.backends.cudnn.benchmark = True
 
 
 # Shawn beam search decoding
@@ -544,25 +550,27 @@ class Model(nn.Module):
         self.decoder.load_state_dict(torch.load(self.model_dir + self.model_name + '-' + str(iter) + '.dec'))
 
     def input_index2word(self, index):
-        if self.input_lang_index2word.has_key(index):
+        #if self.input_lang_index2word.has_key(index):
+        if index in self.input_lang_index2word:
             return self.input_lang_index2word[index]
         else:
             raise UserWarning('We are using UNK')
 
     def output_index2word(self, index):
-        if self.output_lang_index2word.has_key(index):
+        #if self.output_lang_index2word.has_key(index):
+        if index in self.output_lang_index2word:
             return self.output_lang_index2word[index]
         else:
             raise UserWarning('We are using UNK')
 
     def input_word2index(self, index):
-        if self.input_lang_word2index.has_key(index):
+        if index in self.input_lang_word2index:
             return self.input_lang_word2index[index]
         else:
             return 2
 
     def output_word2index(self, index):
-        if self.output_lang_word2index.has_key(index):
+        if index in self.output_lang_word2index:
             return self.output_lang_word2index[index]
         else:
             return 2

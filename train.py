@@ -95,8 +95,10 @@ def trainIters(model, n_epochs=10, args=args):
         # watch out where do you put it
         model.optimizer = Adam(lr=args.lr_rate, params=filter(lambda x: x.requires_grad, model.parameters()), weight_decay=args.l2_norm)
         model.optimizer_policy = Adam(lr=args.lr_rate, params=filter(lambda x: x.requires_grad, model.policy.parameters()), weight_decay=args.l2_norm)
-
-        dials = train_dials.keys()
+    
+        #add list for python2 to 3 TypeError: 'dict_keys' object does not support indexing
+        #see https://blog.csdn.net/qq_33363973/article/details/77877485 for details
+        dials = list(train_dials.keys())
         random.shuffle(dials)
         input_tensor = [];target_tensor = [];bs_tensor = [];db_tensor = []
         for name in dials:

@@ -42,27 +42,23 @@ def fixDelex(filename, data, data2, idx, idx_acts):
     except:
         return data
 
-    if not isinstance(turn, str): #and not isinstance(turn, bytes):
-        no_annotation_item = 0
-        try:
-            for k, act in turn.items():
-                if 'Attraction' in k:
-                    if 'restaurant_' in data['log'][idx]['text']:
-                        data['log'][idx]['text'] = data['log'][idx]['text'].replace("restaurant", "attraction")
-                    if 'hotel_' in data['log'][idx]['text']:
-                        data['log'][idx]['text'] = data['log'][idx]['text'].replace("hotel", "attraction")
-                if 'Hotel' in k:
-                    if 'attraction_' in data['log'][idx]['text']:
-                        data['log'][idx]['text'] = data['log'][idx]['text'].replace("attraction", "hotel")
-                    if 'restaurant_' in data['log'][idx]['text']:
-                        data['log'][idx]['text'] = data['log'][idx]['text'].replace("restaurant", "hotel")
-                if 'Restaurant' in k:
-                    if 'attraction_' in data['log'][idx]['text']:
-                        data['log'][idx]['text'] = data['log'][idx]['text'].replace("attraction", "restaurant")
-                    if 'hotel_' in data['log'][idx]['text']:
-                        data['log'][idx]['text'] = data['log'][idx]['text'].replace("hotel", "restaurant")
-        except AttributeError:
-            print("curent no_annotation_item:", no_annotation_item, "turn:",turn)
+    if not isinstance(turn, str) and not isinstance(turn, bytes):
+        for k, act in turn.items():
+            if 'Attraction' in k:
+                if 'restaurant_' in data['log'][idx]['text']:
+                    data['log'][idx]['text'] = data['log'][idx]['text'].replace("restaurant", "attraction")
+                if 'hotel_' in data['log'][idx]['text']:
+                    data['log'][idx]['text'] = data['log'][idx]['text'].replace("hotel", "attraction")
+            if 'Hotel' in k:
+                if 'attraction_' in data['log'][idx]['text']:
+                    data['log'][idx]['text'] = data['log'][idx]['text'].replace("attraction", "hotel")
+                if 'restaurant_' in data['log'][idx]['text']:
+                    data['log'][idx]['text'] = data['log'][idx]['text'].replace("restaurant", "hotel")
+            if 'Restaurant' in k:
+                if 'attraction_' in data['log'][idx]['text']:
+                    data['log'][idx]['text'] = data['log'][idx]['text'].replace("attraction", "restaurant")
+                if 'hotel_' in data['log'][idx]['text']:
+                    data['log'][idx]['text'] = data['log'][idx]['text'].replace("hotel", "restaurant")
 
     return data
 
