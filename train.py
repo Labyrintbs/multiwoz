@@ -134,6 +134,7 @@ def trainIters(model, n_epochs=10, args=args):
 
             proba, _, _ = model.forward(input_tensor, input_lengths, target_tensor, target_lengths, db_tensor, bs_tensor)
             proba = proba.view(-1, model.vocab_size) # flatten all predictions
+            proba = proba.clone().detach().requires_grad_(True).to(device)
             loss = model.gen_criterion(proba, target_tensor.view(-1))
             valid_loss += loss.item()
 

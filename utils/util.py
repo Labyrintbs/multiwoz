@@ -17,6 +17,7 @@ EOS_token = 1
 UNK_token = 2
 PAD_token = 3
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def padSequence(tensor):
     pad_token = PAD_token
@@ -30,7 +31,7 @@ def padSequence(tensor):
         sequence = tensor[i]
         padded_tensor[i, 0:x_len] = sequence[:x_len]
 
-    padded_tensor = torch.LongTensor(padded_tensor)
+    padded_tensor = torch.tensor(padded_tensor, dtype=torch.long, device=device)
     return padded_tensor, tensor_lengths
 
 
@@ -40,9 +41,11 @@ def loadDialogue(model, val_file, input_tensor, target_tensor, bs_tensor, db_ten
             zip(val_file['usr'], val_file['sys'], val_file['bs'], val_file['db'])):
         tensor = [model.input_word2index(word) for word in usr.strip(' ').split(' ')] + [
             EOS_token]  # model.input_word2index(word)
+        # torch.LongTensor is cpu tensor, see https://pytorch.org/docs/stable/tensors.html
         input_tensor.append(torch.LongTensor(tensor))  # .view(-1, 1))
 
         tensor = [model.output_word2index(word) for word in sys.strip(' ').split(' ')] + [EOS_token]
+        #tensor = torch.tensor(tensor, dtype=torch.long, device=device)
         target_tensor.append(torch.LongTensor(tensor))  # .view(-1, 1)
 
         bs_tensor.append([float(belief) for belief in bs])
