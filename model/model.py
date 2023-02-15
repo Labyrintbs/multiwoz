@@ -338,15 +338,16 @@ class Model(nn.Module):
         proba, _, decoded_sent = self.forward(input_tensor, input_lengths, target_tensor, target_lengths, db_tensor, bs_tensor)
 
         proba = proba.view(-1, self.vocab_size)
+        proba = proba.clone().detach().requires_grad_(True).to(self.device)
         self.gen_loss = self.gen_criterion(proba, target_tensor.view(-1))
 
         self.loss = self.gen_loss
         self.loss.backward()
+        self.printGrad()
         grad = self.clipGradients()
         self.optimizer.step()
         self.optimizer.zero_grad()
 
-        #self.printGrad()
         return self.loss.item(), 0, grad
 
     def setOptimizers(self):
@@ -376,7 +377,7 @@ class Model(nn.Module):
         # GENERATOR
         # Teacher forcing: Feed the target as the next input
         _, target_len = target_tensor.size()
-        decoder_input = torch.LongTensor([[SOS_token] for _ in range(batch_size)], device=self.device)
+        decoder_input = torch.tensor([[SOS_token] for _ in range(batch_size)], dtype=torch.long, device=self.device)
 
         proba = torch.zeros(batch_size, target_length, self.vocab_size)  # [B,T,V]
 
@@ -541,7 +542,7 @@ class Model(nn.Module):
         torch.save(self.decoder.state_dict(), self.model_dir + self.model_name + '-' + str(iter) + '.dec')
 
         with open(self.model_dir + self.model_name + '.config', 'w') as f:
-            f.write(unicode(json.dumps(vars(self.args), ensure_ascii=False, indent=4)))
+            f.write(json.dumps(vars(self.args), ensure_ascii=False, indent=4))
 
     def loadModel(self, iter=0):
         print('Loading parameters of iter %s ' % iter)
