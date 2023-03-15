@@ -17,6 +17,7 @@ from torch import optim
 #changes adapted to python3
 from functools import reduce  
 from model import policy
+import datetime
 
 SOS_token = 0
 EOS_token = 1
@@ -338,7 +339,7 @@ class Model(nn.Module):
         proba, _, decoded_sent = self.forward(input_tensor, input_lengths, target_tensor, target_lengths, db_tensor, bs_tensor)
 
         proba = proba.view(-1, self.vocab_size)
-        proba = proba.clone().detach().requires_grad_(True).to(self.device)
+        proba = proba.clone().requires_grad_(True).to(self.device)
         self.gen_loss = self.gen_criterion(proba, target_tensor.view(-1))
 
         self.loss = self.gen_loss
@@ -347,7 +348,6 @@ class Model(nn.Module):
         self.optimizer.step()
         self.optimizer.zero_grad()
 
-        #self.printGrad()
         return self.loss.item(), 0, grad
 
     def setOptimizers(self):
@@ -427,7 +427,9 @@ class Model(nn.Module):
                 self.topk = 1
                 endnodes = []  # stored end nodes
                 number_required = min((self.topk + 1), self.topk - len(endnodes))
-                decoder_input = torch.LongTensor([[SOS_token]], device=self.device)
+                decoder_input = torch.tensor([[SOS_token] for _ in range(batch_size)], dtype=torch.long,
+                                             device=self.device)
+                #decoder_input = torch.LongTensor([[SOS_token]], device=self.device)
 
                 # starting node hidden vector, prevNode, wordid, logp, leng,
                 node = BeamSearchNode(decoder_hidden, None, decoder_input, 0, 1)
@@ -506,7 +508,8 @@ class Model(nn.Module):
     def greedy_decode(self, decoder_hidden, encoder_outputs, target_tensor):
         decoded_sentences = []
         batch_size, seq_len = target_tensor.size()
-        decoder_input = torch.LongTensor([[SOS_token] for _ in range(batch_size)], device=self.device)
+        decoder_input = torch.tensor([[SOS_token] for _ in range(batch_size)], dtype=torch.long, device=self.device)
+        #decoder_input = torch.LongTensor([[SOS_token] for _ in range(batch_size)], device=self.device)
 
         decoded_words = torch.zeros((batch_size, self.max_len))
         for t in range(self.max_len):
@@ -537,12 +540,17 @@ class Model(nn.Module):
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir)
 
+        """
+        current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        model_name = f"model_{current_time}.pt"
+        torch.save(model.state_dict(), model_name)
+        """
         torch.save(self.encoder.state_dict(), self.model_dir + self.model_name + '-' + str(iter) + '.enc')
         torch.save(self.policy.state_dict(), self.model_dir + self.model_name + '-' + str(iter) + '.pol')
         torch.save(self.decoder.state_dict(), self.model_dir + self.model_name + '-' + str(iter) + '.dec')
 
         with open(self.model_dir + self.model_name + '.config', 'w') as f:
-            f.write(unicode(json.dumps(vars(self.args), ensure_ascii=False, indent=4)))
+            f.write(json.dumps(vars(self.args), ensure_ascii=False, indent=4))
 
     def loadModel(self, iter=0):
         print('Loading parameters of iter %s ' % iter)

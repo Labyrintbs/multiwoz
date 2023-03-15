@@ -4,7 +4,9 @@ import argparse
 import json
 import random
 import time
+import datetime
 from io import open
+import os
 
 import numpy as np
 import torch
@@ -47,8 +49,8 @@ parser.add_argument('--no_cuda',  type=util.str2bool, nargs='?', const=True, def
 parser.add_argument('--seed', type=int, default=0, metavar='S', help='random seed (default: 1)')
 parser.add_argument('--train_output', type=str, default='data/train_dials/', help='Training output dir path')
 
-parser.add_argument('--max_epochs', type=int, default=15)
-parser.add_argument('--early_stop_count', type=int, default=2)
+parser.add_argument('--max_epochs', type=int, default=30)
+parser.add_argument('--early_stop_count', type=int, default=5)
 parser.add_argument('--model_dir', type=str, default='model/model/')
 parser.add_argument('--model_name', type=str, default='translate.ckpt')
 
@@ -88,8 +90,11 @@ def train(print_loss_total,print_act_total, print_grad_total, input_tensor, targ
 def trainIters(model, n_epochs=10, args=args):
     prev_min_loss, early_stop_count = 1 << 30, args.early_stop_count
     start = time.time()
-
+    no_improve_count = 0
     for epoch in range(1, n_epochs + 1):
+        if no_improve_count > early_stop_count:
+            break
+
         print_loss_total = 0; print_grad_total = 0; print_act_total = 0  # Reset every print_every
         start_time = time.time()
         # watch out where do you put it
@@ -121,6 +126,7 @@ def trainIters(model, n_epochs=10, args=args):
 
         # VALIDATION
         valid_loss = 0
+        best_loss = float("inf")
         for name, val_file in val_dials.items():
             input_tensor = []; target_tensor = []; bs_tensor = [];db_tensor = []
             input_tensor, target_tensor, bs_tensor, db_tensor = util.loadDialogue(model, val_file, input_tensor,
@@ -137,12 +143,13 @@ def trainIters(model, n_epochs=10, args=args):
             proba = proba.clone().detach().requires_grad_(True).to(device)
             loss = model.gen_criterion(proba, target_tensor.view(-1))
             valid_loss += loss.item()
-
-
         valid_loss /= len(val_dials)
         print('Current Valid LOSS:', valid_loss)
+        if valid_loss < best_loss:
+            saveModel(model)
+        else:
+            no_improve_count += 1
 
-        model.saveModel(epoch)
 
 
 def loadDictionaries():
@@ -157,6 +164,17 @@ def loadDictionaries():
         output_lang_word2index = json.load(f)
 
     return input_lang_index2word, output_lang_index2word, input_lang_word2index, output_lang_word2index
+
+def saveModel(model):
+    print('Saving parameters..')
+    if not os.path.exists(model.model_dir):
+        os.makedirs(model.model_dir)
+    current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    model_name = f"model_{current_time}.pt"
+    with open(model.model_dir + 'Multiwoz_train' + '.config', 'w') as f:
+        f.write(json.dumps(vars(model.args), ensure_ascii=False, indent=4))
+    torch.save(model.state_dict(), model_name)
+
 
 
 if __name__ == '__main__':
