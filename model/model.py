@@ -427,7 +427,9 @@ class Model(nn.Module):
                 self.topk = 1
                 endnodes = []  # stored end nodes
                 number_required = min((self.topk + 1), self.topk - len(endnodes))
-                decoder_input = torch.LongTensor([[SOS_token]], device=self.device)
+                decoder_input = torch.tensor([[SOS_token] for _ in range(batch_size)], dtype=torch.long,
+                                             device=self.device)
+                #decoder_input = torch.LongTensor([[SOS_token]], device=self.device)
 
                 # starting node hidden vector, prevNode, wordid, logp, leng,
                 node = BeamSearchNode(decoder_hidden, None, decoder_input, 0, 1)
@@ -506,7 +508,8 @@ class Model(nn.Module):
     def greedy_decode(self, decoder_hidden, encoder_outputs, target_tensor):
         decoded_sentences = []
         batch_size, seq_len = target_tensor.size()
-        decoder_input = torch.LongTensor([[SOS_token] for _ in range(batch_size)], device=self.device)
+        decoder_input = torch.tensor([[SOS_token] for _ in range(batch_size)], dtype=torch.long, device=self.device)
+        #decoder_input = torch.LongTensor([[SOS_token] for _ in range(batch_size)], device=self.device)
 
         decoded_words = torch.zeros((batch_size, self.max_len))
         for t in range(self.max_len):

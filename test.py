@@ -15,7 +15,7 @@ from evaluate import MultiWozEvaluator
 from model.model import Model
 
 parser = argparse.ArgumentParser(description='S2S')
-parser.add_argument('--no_cuda', type=util.str2bool, nargs='?', const=True, default=True, help='enables CUDA training')
+parser.add_argument('--no_cuda', type=util.str2bool, nargs='?', const=True, default=False, help='enables CUDA training')
 parser.add_argument('--seed', type=int, default=1, metavar='S', help='random seed (default: 1)')
 
 parser.add_argument('--no_models', type=int, default=20, help='how many models to evaluate')
@@ -28,6 +28,7 @@ parser.add_argument('--beam_width', type=int, default=10, help='Beam width used 
 parser.add_argument('--write_n_best', type=util.str2bool, nargs='?', const=True, default=False, help='Write n-best list (n=beam_width)')
 
 parser.add_argument('--model_path', type=str, default='model/model/translate.ckpt', help='Path to a specific model checkpoint.')
+parser.add_argument('--config_path', type=str, default='model/model/translate.ckpt', help='Path to a specific model checkpoint.')
 parser.add_argument('--model_dir', type=str, default='model/')
 parser.add_argument('--model_name', type=str, default='translate.ckpt')
 
@@ -43,8 +44,8 @@ device = torch.device("cuda" if args.cuda else "cpu")
 
 
 def load_config(args):
-    config = util.unicode_to_utf8(
-        json.load(open('%s.json' % args.model_path, 'rb')))
+    with open(args.model_path + '.json', 'r') as f:
+        config = json.load(f)
     for key, value in args.__args.items():
         try:
             config[key] = value.value
@@ -54,7 +55,7 @@ def load_config(args):
     return config
 
 
-def loadModelAndData(num):
+def loadModelAndData():
     # Load dictionaries
     with open('data/input_lang.index2word.json') as f:
         input_lang_index2word = json.load(f)
@@ -68,7 +69,9 @@ def loadModelAndData(num):
     # Reload existing checkpoint
     model = Model(args, input_lang_index2word, output_lang_index2word, input_lang_word2index, output_lang_word2index)
     if args.load_param:
-        model.loadModel(iter=num)
+        print("Load model from PATH:", args.model_path)
+        model.load_state_dict(torch.load(args.model_path))
+        #model.loadModel(iter=num)
 
     # Load data
     if os.path.exists(args.decode_output):
@@ -93,8 +96,8 @@ def loadModelAndData(num):
     return model, val_dials, test_dials
 
 
-def decode(num=1):
-    model, val_dials, test_dials = loadModelAndData(num)
+def decode(num):
+    model, val_dials, test_dials = loadModelAndData()
     evaluator_valid = MultiWozEvaluator("valid")
     evaluator_test = MultiWozEvaluator("test")
 
@@ -158,7 +161,7 @@ def decode(num=1):
 
 def decodeWrapper():
     # Load config file
-    with open(args.model_path + '.config') as f:
+    with open(args.config_path + '.config') as f:
         add_args = json.load(f)
         for k, v in add_args.items():
             setattr(args, k, v)
@@ -172,13 +175,15 @@ def decodeWrapper():
     args.original = args.model_path
     for ii in range(1, args.no_models + 1):
         print(70 * '-' + 'EVALUATING EPOCH %s' % ii)
-        args.model_path = args.model_path + '-' + str(ii)
+        #args.model_path = args.model_path + '-' + str(ii)
+        decode(ii)
+        '''
         try:
             decode(ii)
         except:
             print('cannot decode')
-
-        args.model_path = args.original
+        '''
+        #args.model_path = args.original
 
 
 if __name__ == '__main__':
