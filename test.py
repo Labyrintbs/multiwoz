@@ -5,6 +5,7 @@ from __future__ import division, print_function, unicode_literals
 import argparse
 import json
 import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import shutil
 import time
 
@@ -44,7 +45,7 @@ device = torch.device("cuda" if args.cuda else "cpu")
 
 
 def load_config(args):
-    with open(args.model_path + '.json', 'r') as f:
+    with open(args.config_path + '.json', 'r') as f:
         config = json.load(f)
     for key, value in args.__args.items():
         try:

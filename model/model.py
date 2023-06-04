@@ -425,11 +425,13 @@ class Model(nn.Module):
 
                 # Beam start
                 self.topk = 1
+
                 endnodes = []  # stored end nodes
                 number_required = min((self.topk + 1), self.topk - len(endnodes))
-                decoder_input = torch.tensor([[SOS_token] for _ in range(batch_size)], dtype=torch.long,
-                                             device=self.device)
+                #decoder_input = torch.tensor([[SOS_token] for _ in range(self.args.batch_size)], dtype=torch.long,
+                #                             device=self.device)
                 #decoder_input = torch.LongTensor([[SOS_token]], device=self.device)
+                decoder_input = torch.tensor([[SOS_token]], dtype=torch.long, device=self.device)
 
                 # starting node hidden vector, prevNode, wordid, logp, leng,
                 node = BeamSearchNode(decoder_hidden, None, decoder_input, 0, 1)

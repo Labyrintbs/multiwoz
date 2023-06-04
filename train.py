@@ -7,6 +7,7 @@ import time
 import datetime
 from io import open
 import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 import numpy as np
 import torch
@@ -145,10 +146,11 @@ def trainIters(model, n_epochs=10, args=args):
             valid_loss += loss.item()
         valid_loss /= len(val_dials)
         print('Current Valid LOSS:', valid_loss)
-        if valid_loss < best_loss:
-            saveModel(model)
-        else:
-            no_improve_count += 1
+        if epoch % 5 == 0:
+            if valid_loss < best_loss:
+                saveModel(model)
+            else:
+                no_improve_count += 1
 
 
 
@@ -169,8 +171,8 @@ def saveModel(model):
     print('Saving parameters..')
     if not os.path.exists(model.model_dir):
         os.makedirs(model.model_dir)
-    current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    model_name = f"model_{current_time}.pt"
+    current_time = datetime.datetime.now().strftime("%Y%m%d")
+    model_name = f"model_{current_time}_best.pt"
     with open(model.model_dir + 'Multiwoz_train' + '.config', 'w') as f:
         f.write(json.dumps(vars(model.args), ensure_ascii=False, indent=4))
     torch.save(model.state_dict(), model_name)
